@@ -56,10 +56,3 @@ if __name__ == "__main__":
 
     for i in range(len(view_names)):
         export_view(jpexport_path, snapshot, view_names[i], options[i], f"{snapshot_name}_{output_names[i]}")
-
-'''
-TO DO:
-  -Change the script such that it works from any directory, i.e. 
-   we should be able to pass the output directory to the command line, so that we can run this script
-   from any location. This can be done by adding the output directory before the output name.
-'''
