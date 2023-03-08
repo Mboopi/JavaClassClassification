@@ -47,8 +47,8 @@ if __name__ == "__main__":
     view_names = ["CallTree", "AllocationHotspots", "RecordedObjects", "RecordedObjects"]
     options = ["-format=xml -aggregation=class -threadstatus=all",
                f"-format=xml -aggregation=class -package={package} -liveness=all -expandbacktraces=true",
-               "-format=csv -aggregation=class -liveness=live",
-               "-format=csv -aggregation=class -liveness=gc"]
+               f"-format=csv -viewfilters={package} -aggregation=class -liveness=live",
+               f"-format=csv -viewfilters={package} -aggregation=class -liveness=gc"]
     output_names = [f"{view_names[0]}.xml",
                     f"{view_names[1]}.xml",
                     f"{view_names[2]}Live.csv",
