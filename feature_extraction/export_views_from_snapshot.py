@@ -25,6 +25,8 @@ def init():
         if file_extension in file_name:
             snapshot = f"{snapshot_directory}/{file_name}"
     
+    print(f"===Exporting views for {snapshot}===")
+    
     return jpexport_path, snapshot_directory, snapshot, package
 
 ''' Method that exports a view from the snapshots by running in the terminal:
@@ -47,11 +49,11 @@ if __name__ == "__main__":
     view_names = ["CallTree", "AllocationHotspots", "RecordedObjects", "RecordedObjects"]
     options = ["-format=xml -aggregation=class -threadstatus=all",
                f"-format=xml -aggregation=class -package={package} -liveness=all -expandbacktraces=true",
-               f"-format=csv -viewfilters={package} -aggregation=class -liveness=live",
+               f"-format=csv -viewfilters={package} -aggregation=class -liveness=all",
                f"-format=csv -viewfilters={package} -aggregation=class -liveness=gc"]
     output_names = [f"{view_names[0]}.xml",
                     f"{view_names[1]}.xml",
-                    f"{view_names[2]}Live.csv",
+                    f"{view_names[2]}All.csv",
                     f"{view_names[3]}Garbage.csv"] 
 
     for i in range(len(view_names)):
