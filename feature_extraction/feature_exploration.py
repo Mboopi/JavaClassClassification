@@ -54,7 +54,7 @@ def unique_classes_CSV(CSVs):
     for csv in CSVs:
         for name in csv['Name']:
             if is_valid_class(name):
-                classes.append(name)
+                classes.append(name.removesuffix("[ ]")) # For some reason, some classes in the CSV end with [ ].
 
     return [*set(classes)]
 
@@ -73,24 +73,60 @@ def unique_classes_XML(XML_trees):
 
     return[*set(classes)]
 
+'''Method that convert class name notation, as used by the replication package (Ho-Quang et al.) 
+to notation used by JProfiler.'''
+def convert_name(class_name):
+    class_name = class_name.removeprefix("\src\\")
+    class_name = class_name.removesuffix(".java")
+    class_name = class_name.replace(".", "$")
+    class_name = class_name.replace("\\", ".")
+
+    return class_name
+
+'''Method that compares two list of classes and returns the set difference (a - b).'''
+def determine_missing(a, b):
+    return set(a) - set(b)
+
 
 if __name__ == "__main__":
     PROJECT_NAME = "sweethome3d"
 
     # Count unique objects in CSVs.
-    live_CSV_paths = find_file_paths("Live.csv", PROJECT_NAME)
+    rec_CSV_paths = find_file_paths("All.csv", PROJECT_NAME)
     gc_CSV_paths = find_file_paths("Garbage.csv", PROJECT_NAME)
-    live_CSVs = load_CSVs(live_CSV_paths)
+    rec_CSVs = load_CSVs(rec_CSV_paths)
     gc_CSVs = load_CSVs(gc_CSV_paths)
+    unique_classes_rec= unique_classes_CSV(rec_CSVs)
+    unique_classes_gc = unique_classes_CSV(gc_CSVs)
 
-    print(f"Number of uniquely recorded live objects: {len(unique_classes_CSV(live_CSVs))}")
-    print(f"Number of uniquely recored garbage colleced objects: {len(unique_classes_CSV(gc_CSVs))}")
+    print(f"Number of uniquely recorded objects: {len(unique_classes_rec)}")
+    print(f"Number of uniquely garbage collected objects: {len(unique_classes_gc)}")
 
     # Count unique objects in XMLs.
     call_XML_paths = find_file_paths("CallTree.xml", PROJECT_NAME)
     alloc_XML_paths = find_file_paths("Hotspots.xml", PROJECT_NAME)
     call_XMLs = load_XMLs(call_XML_paths)
-    alloc_XML_paths = load_XMLs(alloc_XML_paths)
+    alloc_XMLs = load_XMLs(alloc_XML_paths)
+    unique_classes_call = unique_classes_XML(call_XMLs)
+    # unique_classes_alloc = unique_classes_XML(alloc_XMLs)
 
-    print(f"Number of unique classes in all call trees: {len(unique_classes_XML(call_XMLs))}")
-    print(f"Number of unique classes in all allocation hotspots: {len(unique_classes_XML(alloc_XML_paths))}")
+    print(f"Number of unique classes in call trees: {len(unique_classes_call)}")
+    # print(f"Number of unique classes in allocation hotspots: {len(unique_classes_alloc)}")
+
+    # Check how many classes from replication package we are missing.
+    labels_csv = pd.read_csv("./data/ground_truth/sweethome3d/labeled_classes.csv")
+    labels_csv.pop('index')
+    labels_csv.pop('case')
+    
+    required_classes = []
+    for name in labels_csv['fullpathname']:
+        required_classes.append(convert_name(name))
+
+    print(f"{len(determine_missing(required_classes, unique_classes_call))} classes from paper missing in the call tree.")
+
+    # test = set(unique_classes_call).intersection(set(unique_classes_rec))
+
+    missing_classes = determine_missing(required_classes, unique_classes_call)
+
+    for c in missing_classes:
+        print(c.removeprefix("com.eteks.sweethome3d."))
