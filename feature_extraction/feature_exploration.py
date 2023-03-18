@@ -45,7 +45,7 @@ Note: test classes are also considered as non-unique and therefore removed.
 If the class_name contains a $-sign followed by an int, then it's an anonymous class so return False.
 Otherwise, return True.'''
 def is_valid_class(class_name):
-    return not (bool(re.search('[$]\d', class_name)) or bool(re.search('Test', class_name)))
+    return not (bool(re.search('[$]\d+', class_name)) or bool(re.search('Test', class_name)))
 
 '''Method that given a list of CSVs, returns a list of unique classes.'''
 def unique_classes_CSV(CSVs):
@@ -53,8 +53,9 @@ def unique_classes_CSV(CSVs):
 
     for csv in CSVs:
         for name in csv['Name']:
-            if is_valid_class(name):
-                classes.append(name.removesuffix("[ ]")) # For some reason, some classes in the CSV end with [ ].
+            class_name = name.removesuffix("[ ]") # Some classes in the CSV end with [ ].
+            if is_valid_class(class_name):
+                classes.append(class_name) 
 
     return [*set(classes)]
 
@@ -108,10 +109,10 @@ if __name__ == "__main__":
     call_XMLs = load_XMLs(call_XML_paths)
     alloc_XMLs = load_XMLs(alloc_XML_paths)
     unique_classes_call = unique_classes_XML(call_XMLs)
-    # unique_classes_alloc = unique_classes_XML(alloc_XMLs)
+    unique_classes_alloc = unique_classes_XML(alloc_XMLs)
 
     print(f"Number of unique classes in call trees: {len(unique_classes_call)}")
-    # print(f"Number of unique classes in allocation hotspots: {len(unique_classes_alloc)}")
+    print(f"Number of unique classes in allocation hotspots: {len(unique_classes_alloc)}")
 
     # Check how many classes from replication package we are missing.
     labels_csv = pd.read_csv("./data/ground_truth/sweethome3d/labeled_classes.csv")
@@ -124,9 +125,4 @@ if __name__ == "__main__":
 
     print(f"{len(determine_missing(required_classes, unique_classes_call))} classes from paper missing in the call tree.")
 
-    # test = set(unique_classes_call).intersection(set(unique_classes_rec))
-
     missing_classes = determine_missing(required_classes, unique_classes_call)
-
-    for c in missing_classes:
-        print(c.removeprefix("com.eteks.sweethome3d."))
