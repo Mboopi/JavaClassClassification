@@ -9,7 +9,7 @@ class PreProcesser:
     
         self.combined_CSV = None # Stores the combined CSV.
 
-        pd.set_option('display.max_colwidth', None) # For testing purposes, don't truncate name when printing.
+        pd.set_option("display.max_colwidth", None) # For testing purposes, don't truncate name when printing.
 
     '''Method that combines the individual CSV files into 1 CSV file. 
     Duplicate entries are merged into 1 entry by summing up the values of their columns.'''
@@ -32,35 +32,34 @@ class PreProcesser:
         self.combined_CSV = self.combined_CSV[self.combined_CSV['Name'].isin(reference_classes)] # Keep only the reference classes.
 
     '''Method that saves the combined CSV file.'''
-    def save_file(self, file_name: str):
-        self.combined_CSV.to_csv(file_name, sep=",", index=False)        
+    def save_file(self, file_path: str):
+        self.combined_CSV.to_csv(file_path, sep=",", index=False)        
     
 
 if __name__ == "__main__":
     PROJECT_NAME = "sweethome3d"
     # PROJECT_NAME = "test_project"
 
-    # Paths to CSV recorded objects CSVs.
-    recorded_objects_all = find_file_paths("All.csv", PROJECT_NAME)
-    recorded_objects_gc = find_file_paths("Garbage.csv", PROJECT_NAME)
-
     # Classes that are used by the paper, i.e. our reference classes.
-    labels_csv = pd.read_csv("./data/ground_truth/sweethome3d/labeled_classes.csv")
+    labels_csv = pd.read_csv(f"./data/ground_truth/{PROJECT_NAME}/labeled_classes.csv")
     labels_csv.pop("index")
     labels_csv.pop("case")
     
     # Convert the name notation to the notation used by JProfiler and store the classes in a list.
     reference_classes = []
-    for name in labels_csv['fullpathname']:
+    for name in labels_csv["fullpathname"]:
         reference_classes.append(convert_name(name))
 
+    # Paths to CSV recorded objects CSVs.
+    recorded_objects_all = find_file_paths("All.csv", PROJECT_NAME)
+    recorded_objects_gc = find_file_paths("Garbage.csv", PROJECT_NAME)
 
     all_objects_processor = PreProcesser(recorded_objects_all)
     all_objects_processor.combine_CSV_files()
     all_objects_processor.drop_redundant_classes(reference_classes)
-    all_objects_processor.save_file("./feature_extraction/raw_data/sweethome3d/RecoredObjectsAll.csv")
+    all_objects_processor.save_file(f"./feature_extraction/raw_data/{PROJECT_NAME}/RecordedObjectsAll.csv")
 
     gc_objects_processor = PreProcesser(recorded_objects_gc)
     gc_objects_processor.combine_CSV_files()
     gc_objects_processor.drop_redundant_classes(reference_classes)
-    gc_objects_processor.save_file("./feature_extraction/raw_data/sweethome3d/RecoredObjectsGarbage.csv")
+    gc_objects_processor.save_file(f"./feature_extraction/raw_data/{PROJECT_NAME}/RecordedObjectsGarbage.csv")
