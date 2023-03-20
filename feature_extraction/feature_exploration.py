@@ -12,7 +12,7 @@ def find_file_paths(key_word, project_name):
     file_paths = []
 
     for root, dirs, files in os.walk(".", topdown=True):
-        if project_name in root:
+        if project_name and "execution_info" in root:
             for name in files:
                 if project_name and key_word in name:
                     file_paths.append(os.path.join(root, name))
