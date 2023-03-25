@@ -1,5 +1,4 @@
 from feature_exploration import find_file_paths
-import pandas as pd
 import xml.etree.ElementTree as ET
 import re
 
@@ -38,6 +37,16 @@ class xmlProcessor():
                 class_name = child.attrib["class"]
                 if bool(re.search(regex, class_name)):
                     child.set("class", re.sub(regex, "", class_name))
+    
+    def get_combined_root(self):
+        return self.combined_roots
+
+    # def drop_test_classes(self, parent_node: ET.Element, children: list, firstCall: bool):
+    #     for child in children:
+    #         if "Test" in child.attrib["class"]:
+    #             parent_node.remove(child)
+            
+    #         self.drop_test_classes(child, child.findall("node"), firstCall=False)
 
     '''Method that writes the combined XML to a file.'''
     def save_file(self, file_path: str):
@@ -51,14 +60,15 @@ if __name__ == "__main__":
 
     # Paths to CSV recorded objects CSVs.
     call_trees = find_file_paths("CallTree.xml", PROJECT_NAME)
-    alloc_hotspots = find_file_paths("Hotspots.xml", PROJECT_NAME)
+    # alloc_hotspots = find_file_paths("Hotspots.xml", PROJECT_NAME)
 
     call_tree_procesor = xmlProcessor(call_trees)
     call_tree_procesor.combine_files()
     call_tree_procesor.merge_anom_classes()
+    # call_tree_procesor.drop_test_classes(call_tree_root, call_tree_root.findall("node"), firstCall=True)
     call_tree_procesor.save_file(f"./feature_extraction/raw_data/{PROJECT_NAME}/CallTree.xml")
-
-    hotspot_processor = xmlProcessor(alloc_hotspots)
-    hotspot_processor.combine_files()
-    hotspot_processor.merge_anom_classes()
-    hotspot_processor.save_file(f"./feature_extraction/raw_data/{PROJECT_NAME}/AllocationHotspots.xml")
+''
+    # hotspot_processor = xmlProcessor(alloc_hotspots)
+    # hotspot_processor.combine_files()
+    # hotspot_processor.merge_anom_classes()
+    # hotspot_processor.save_file(f"./feature_extraction/raw_data/{PROJECT_NAME}/AllocationHotspots.xml")
