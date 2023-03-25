@@ -46,15 +46,13 @@ if __name__ == "__main__":
     jpexport_path, snapshot_directory, snapshot, package = init()
     snapshot_name = snapshot.removesuffix(".jps")
 
-    view_names = ["CallTree", "AllocationHotspots", "RecordedObjects", "RecordedObjects"]
-    options = ["-format=xml -aggregation=class -threadstatus=all",
-               f"-format=xml -aggregation=class -package={package} -liveness=all -expandbacktraces=true",
+    view_names = ["CallTree", "RecordedObjects", "RecordedObjects"]
+    options = ["-format=xml -aggregation=method -threadstatus=all",
                f"-format=csv -viewfilters={package} -aggregation=class -liveness=all",
                f"-format=csv -viewfilters={package} -aggregation=class -liveness=gc"]
     output_names = [f"{view_names[0]}.xml",
-                    f"{view_names[1]}.xml",
-                    f"{view_names[2]}All.csv",
-                    f"{view_names[3]}Garbage.csv"] 
+                    f"{view_names[1]}All.csv",
+                    f"{view_names[2]}Garbage.csv"] 
 
     for i in range(len(view_names)):
         export_view(jpexport_path, snapshot, view_names[i], options[i], f"{snapshot_name}_{output_names[i]}")
