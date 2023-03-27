@@ -15,7 +15,7 @@ class xmlProcessor():
         self.combined_roots = self.roots[0] # Store the combined roots. 
         self.combined_trees = self.trees[0] # The combined trees, which represent the actual XML files, will be self.trees[0]
                         
-    '''Method that combines individual files into 1 file. Duplicate entries are merged by summing up the values of their columns.'''
+    '''Method that combines individual files into 1 file.'''
     def combine_files(self):       
         for count, root in enumerate(self.roots):
             if not count == 0:
@@ -26,14 +26,14 @@ class xmlProcessor():
     unimportant attributes are removed.'''
     def merge_anom_classes(self):
         for child in self.combined_roots.iter():
-            if child.tag == "node" or child.tag == "hotspot":
+            if child.tag == "node": #or child.tag == "hotspot":
                 child.attrib.pop("lineNumber")
                 child.attrib.pop("percent")
 
                 if "time" in child.attrib.keys():
                     child.attrib.pop("time")
                 
-                regex = "[$d]\d+"
+                regex = "[$]\d+"
                 class_name = child.attrib["class"]
                 if bool(re.search(regex, class_name)):
                     child.set("class", re.sub(regex, "", class_name))
