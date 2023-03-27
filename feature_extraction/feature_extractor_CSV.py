@@ -1,15 +1,11 @@
 import pandas as pd
 
-class FeatureExtractor:
-    def __init__(self, objects_all, objects_gc, call_tree, alloc_hotspot):
+class FeatureExtractorCSV:
+    def __init__(self, objects_all, objects_gc):
         self.objects_all = objects_all
         self.objects_gc = objects_gc
-        self.call_tree = call_tree
-        self.alloc_hotspot = alloc_hotspot
         self.ROUND = 3 # Decimals of rounding.
         self.output = pd.DataFrame(self.objects_all["Name"]) # Stores the extracted features in this CSV.
-        '''THIS SHOULD BE CHANGED TO USE THE VALUES OF THE CALL TREE SINCE THESE HAVE MORE CLASSES!!!!!!!
-        !!!!!!!!!!!!!!!!!!!!'''
 
         pd.set_option("display.max_colwidth", None) # For testing purposes, don't truncate name when printing.
     
@@ -26,23 +22,25 @@ class FeatureExtractor:
         self.output["avgObjectSize"] = self.output["avgObjectSize"].round(self.ROUND)
     
     def extract_ratio_gc_objects(self):
-        self.output["ratioGarbageTotal"] = self.output["numObjectsDeallocated"] / self.output["numObjectsTotal"]
-        self.output["ratioGarbageTotal"] = self.output["ratioGarbageTotal"].round(self.ROUND)
+        self.output["percDeallocated"] = self.output["numObjectsDeallocated"] / self.output["numObjectsTotal"]
+        self.output["percDeallocated"] = self.output["percDeallocated"].round(self.ROUND)
 
     def save_file(self, file_path: str):
         self.output.rename(columns = {"Name": "className"}, inplace = True)
         self.output.to_csv(file_path, sep=",", index=False)   
 
-PROJECT_NAME = "sweethome3d"
-# PROJECT_NAME = "test_project"
 
-objects_all = pd.read_csv(f"./feature_extraction/raw_data/{PROJECT_NAME}/RecordedObjectsAll.csv")
-objects_gc = pd.read_csv(f"./feature_extraction/raw_data/{PROJECT_NAME}/RecordedObjectsGarbage.csv")
+if __name__ == "__main__":
+    # PROJECT_NAME = "sweethome3d"
+    PROJECT_NAME = "test_project"
 
-feature_extractor = FeatureExtractor(objects_all, objects_gc, None, None)
-feature_extractor.extract_num_of_total_objects()
-feature_extractor.extract_num_of_gc_objects()
-feature_extractor.extract_avg_size_object()
-feature_extractor.extract_ratio_gc_objects()
+    objects_all = pd.read_csv(f"./feature_extraction/raw_data/{PROJECT_NAME}/RecordedObjectsAll.csv")
+    objects_gc = pd.read_csv(f"./feature_extraction/raw_data/{PROJECT_NAME}/RecordedObjectsGarbage.csv")
 
-feature_extractor.save_file(f"./data/dataset/{PROJECT_NAME}/features_{PROJECT_NAME}.csv")
+    feature_extractor = FeatureExtractorCSV(objects_all, objects_gc)
+    feature_extractor.extract_num_of_total_objects()
+    feature_extractor.extract_num_of_gc_objects()
+    feature_extractor.extract_avg_size_object()
+    feature_extractor.extract_ratio_gc_objects()
+
+    feature_extractor.save_file(f"./data/dataset/{PROJECT_NAME}/features_{PROJECT_NAME}_CSV.csv")
