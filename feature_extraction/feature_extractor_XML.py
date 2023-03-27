@@ -93,8 +93,15 @@ class FeatureExtractorXML:
         self.output_CSV = self.output_CSV.replace(np.inf, -1)
         self.output_CSV = self.output_CSV.fillna(-1)
 
+    def add_true_labels(self, reference_classes:list, true_labels: list):
+        data = {"className": reference_classes, "label": true_labels}
+        df = pd.DataFrame(data)
+        
+        self.output_CSV.index.name = "className"
+        self.output_CSV = pd.merge(self.output_CSV, df, on="className", how="left")
+        
     def save_file(self, file_path: str):
-        self.output_CSV.to_csv(file_path, index_label="className")
+        self.output_CSV.to_csv(file_path, index=False)
 
     def test_print(self):
         print(len(self.output))
@@ -114,20 +121,20 @@ if __name__ == "__main__":
     labels_csv.pop("index")
     labels_csv.pop("case")
     
-    # Convert the name notation to the notation used by JProfiler and store the classes in a list.
+    # Convert the name notation to the notation used by JProfiler and store the classes and their labels in seperate lists.
     reference_classes = []
-    for name in labels_csv["fullpathname"]:
+    true_labels = []
+    for index, row in labels_csv.iterrows():
+        name = row["fullpathname"]
+        label = row["label"]
         reference_classes.append(convert_name(name))
+        true_labels.append(label)
 
     call_tree = ET.parse(f"./feature_extraction/raw_data/{PROJECT_NAME}/CallTree.xml")
 
     feature_extractor = FeatureExtractorXML(call_tree)
     feature_extractor.drop_redundant_classes(reference_classes)
     feature_extractor.extract_features()
-    # feature_extractor.test_print()
-    # feature_extractor.extract_num_of_total_objects()
-    # feature_extractor.extract_num_of_gc_objects()
-    # feature_extractor.extract_avg_size_object()
-    # feature_extractor.extract_ratio_gc_objects()
+    feature_extractor.add_true_labels(reference_classes, true_labels)
 
     feature_extractor.save_file(f"./data/dataset/{PROJECT_NAME}/features_{PROJECT_NAME}_XML.csv")
