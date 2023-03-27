@@ -89,6 +89,7 @@ class FeatureExtractorXML:
         self.output_CSV.drop("totalDepth", axis=1, inplace=True) 
         self.output_CSV.drop("helpCount", axis=1, inplace=True)
 
+        # Sometimes, the ratio or percentage can't be computed because the denominator equals 0, fill it as -1 to represent N/A.
         self.output_CSV = self.output_CSV.replace(np.inf, -1)
         self.output_CSV = self.output_CSV.fillna(-1)
 
