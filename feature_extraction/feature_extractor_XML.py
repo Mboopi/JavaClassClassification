@@ -81,7 +81,7 @@ class FeatureExtractorXML:
         self.output_CSV["ratioInternalExternal"] = (self.output_CSV["numIntCalls"] / self.output_CSV["numExtCalls"]).round(self.ROUND)
         self.output_CSV["ratioIncomingOutgoing"] = (self.output_CSV["numIncomingCalls"] / self.output_CSV["numOutgoingCalls"]).round(self.ROUND)
         self.output_CSV["percObjectCreation"] = (self.output_CSV["numObjectsCreated"] / self.output_CSV["numOutgoingCalls"]).round(self.ROUND)
-        self.output_CSV["percLeaves"] = (self.output_CSV["numLeaves"] / self.output_CSV["numOutgoingCalls"]).round(self.ROUND)
+        self.output_CSV["percLeaves"] = (self.output_CSV["numLeaves"] / (self.output_CSV["numOutgoingCalls"] + self.output_CSV["numLeaves"])).round(self.ROUND)
 
         self.output_CSV.drop("uniqueIncomingCalls", axis=1, inplace=True)
         self.output_CSV.drop("uniqueOutgoingCalls", axis=1, inplace=True)
