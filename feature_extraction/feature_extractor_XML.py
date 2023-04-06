@@ -12,7 +12,8 @@ class FeatureExtractorXML:
         self.output_CSV = None # Store the final features in this CSV.
         class_info = {"numIntCalls": 0, "numExtCalls": 0, "numIncomingCalls": 0, "uniqueOutgoingCalls": set(), 
                       "uniqueIncomingCalls": set(), "numLeaves": 0, "totalExecTime": 0, 
-                      "helpCount": 0, "totalDepth": 0, "numObjectsCreated": 0}
+                      "helpCount": 0, "totalDepth": 0, "numObjectsCreated": 0,
+                      "incomingCallsInside": 0, "incomingCallsOutside": 0, "outgoingCallsInside": 0, "outgoingCallsOutside": 0}
         # helpCount represents the total count of the node itself, helper for computing avg_exec_time and avg_depth.
         
         nodes = self.call_tree.findall(".//node")
@@ -76,10 +77,20 @@ class FeatureExtractorXML:
                     # Parent calls a child: its external calls increases, unique outgoing calls may increase.
                     self.output[parent_name]["numExtCalls"] += child_count 
                     self.output[parent_name]["uniqueOutgoingCalls"].add(child_name)
+
+                    if "sweethome3d" in child_name:
+                        self.output[parent_name]["outgoingCallsInside"] += child_count
+                    else:
+                        self.output[parent_name]["outgoingCallsOutside"] += child_count
                     
                     # Furthermore: the childs incoming calls increases, unique incoming calls may increase.
                     self.output[child_name]["numIncomingCalls"] += child_count 
                     self.output[child_name]["uniqueIncomingCalls"].add(parent_name)
+
+                    if "sweethome3d" in parent_name:
+                        self.output[child_name]["incomingCallsInside"] += child_count
+                    else:
+                        self.output[child_name]["incomingCallsOutside"] += child_count
 
             self.traverse_call_tree(child, child.findall("node"), current_depth = current_depth + 1)
     
@@ -103,6 +114,9 @@ class FeatureExtractorXML:
         self.output_CSV.drop("totalExecTime", axis=1, inplace=True)
         self.output_CSV.drop("totalDepth", axis=1, inplace=True) 
         self.output_CSV.drop("helpCount", axis=1, inplace=True)
+
+        self.output_CSV["incomingCallsRatioInsideOutside"] = (self.output_CSV["incomingCallsInside"] / self.output_CSV["incomingCallsOutside"]).round(self.ROUND)
+        self.output_CSV["outgoingCallsRatioInsideOutside"] = (self.output_CSV["outgoingCallsInside"] / self.output_CSV["outgoingCallsOutside"]).round(self.ROUND)
 
         # Sometimes, the ratio or percentage can't be computed because the denominator equals 0, fill it as -1 to represent N/A.
         self.output_CSV = self.output_CSV.replace(np.inf, -1)

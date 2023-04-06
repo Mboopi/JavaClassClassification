@@ -21,7 +21,9 @@ features_merged["percDeallocated"] = features_merged["percDeallocated"].fillna(-
 features_merged = features_merged.fillna(0)
 
 new_order = ["className", "numIntCalls", "numExtCalls", "ratioInternalExternal", "numIncomingCalls", "numOutgoingCalls", "ratioIncomingOutgoing",
-             "numUniqueIncomingCalls", "numUniqueOutgoingCalls", "numObjectsCreated", "percObjectCreation", 
+             "numUniqueIncomingCalls", "numUniqueOutgoingCalls", 
+             "incomingCallsInside", "incomingCallsOutside", "outgoingCallsInside", "outgoingCallsOutside", "incomingCallsRatioInsideOutside", "outgoingCallsRatioInsideOutside",
+             "numObjectsCreated", "percObjectCreation", 
              "numLeaves", "percLeaves", "avgExecTime", "avgDepth", "numObjectsTotal", "numObjectsDeallocated", "percDeallocated", "avgObjectSize", "label"]
 features_merged = features_merged.reindex(columns=new_order)
 
