@@ -23,8 +23,23 @@ class FeatureExtractorXML:
                 # A shallow copy would copy the inner dict as well as the integer key-values like numIntCalls, 
                 # but for an object e.g. set() it would only copy a reference to that set instead of copying the actualt set.
         
+        # self.remove_non_src_classes(self.call_tree, self.call_tree.findall("node"), firstCall=True)
         self.traverse_call_tree(self.call_tree, self.call_tree.findall("node"), firstCall=True)
+    
+    '''Method that removes all classes that are not part of the project as well as Test classes.'''
+    def remove_non_src_classes(self, parent_node, children, firstCall=False):
+        for child in children:
+            if not firstCall:
+                if not "com.eteks.sweethome3d" in child.attrib["class"]:# or "Test" in child.attrib["class"]:
+                    parent_node.remove(child)
+                    print("REMOVED")
+                else:
+                    self.remove_non_src_classes(child, child.findall("node"))
+            else:
+                self.remove_non_src_classes(child, child.findall("node"))
+  
 
+    '''Method that removes all classes that are not part of the reference classes (the classes that are used by the paper)'''
     def drop_redundant_classes(self, reference_classes: list):
         self.output = {key: value for key, value in self.output.items() if key in reference_classes}
 
@@ -98,7 +113,7 @@ class FeatureExtractorXML:
         df = pd.DataFrame(data)
         
         self.output_CSV.index.name = "className"
-        self.output_CSV = pd.merge(self.output_CSV, df, on="className", how="left")
+        self.output_CSV = pd.merge(self.output_CSV, df, on="className", how="inner")
         
     def save_file(self, file_path: str):
         self.output_CSV.to_csv(file_path, index=False)
@@ -137,4 +152,4 @@ if __name__ == "__main__":
     feature_extractor.extract_features()
     feature_extractor.add_true_labels(reference_classes, true_labels)
 
-    feature_extractor.save_file(f"./data/dataset/{PROJECT_NAME}/features_{PROJECT_NAME}_XML.csv")
+    feature_extractor.save_file(f"./data/dataset/{PROJECT_NAME}/features_{PROJECT_NAME}_XML_v2.csv")
