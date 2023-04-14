@@ -75,29 +75,20 @@ class FeatureExtractorXML:
                     self.output[parent_name]["uniqueIncomingCalls"].add(parent_name)
                 else:
                     # Parent calls a child: its external calls increases, unique outgoing calls may increase.
-                    self.output[parent_name]["numExtCalls"] += child_count 
-                    self.output[parent_name]["uniqueOutgoingCalls"].add(child_name)
-
-                    if "sweethome3d" in child_name:
-                        self.output[parent_name]["outgoingCallsInside"] += child_count
-                    else:
-                        self.output[parent_name]["outgoingCallsOutside"] += child_count
+                    if PROJECT_NAME in child_name:
+                        self.output[parent_name]["numExtCalls"] += child_count 
+                        self.output[parent_name]["uniqueOutgoingCalls"].add(child_name)
                     
-                    # Furthermore: the childs incoming calls increases, unique incoming calls may increase.
-                    self.output[child_name]["numIncomingCalls"] += child_count 
-                    self.output[child_name]["uniqueIncomingCalls"].add(parent_name)
-
-                    if "sweethome3d" in parent_name:
-                        self.output[child_name]["incomingCallsInside"] += child_count
-                    else:
-                        self.output[child_name]["incomingCallsOutside"] += child_count
+                        # Furthermore: the childs incoming calls increases, unique incoming calls may increase.
+                        self.output[child_name]["numIncomingCalls"] += child_count 
+                        self.output[child_name]["uniqueIncomingCalls"].add(parent_name)
 
             self.traverse_call_tree(child, child.findall("node"), current_depth = current_depth + 1)
     
     def extract_features(self):
         self.output_CSV = pd.DataFrame.from_dict(self.output, orient="index")
 
-        self.output_CSV["numOutgoingCalls"] = self.output_CSV["numIntCalls"] + self.output_CSV["numExtCalls"]
+        self.output_CSV["numOutgoingCalls"] = self.output_CSV["numIntCalls"] + self.output_CSV["numExtCalls"] + self.output_CSV["numLeaves"]
 
         self.output_CSV["numUniqueIncomingCalls"] = self.output_CSV["uniqueIncomingCalls"].apply(lambda x: len(x))  
         self.output_CSV["numUniqueOutgoingCalls"] = self.output_CSV["uniqueOutgoingCalls"].apply(lambda x: len(x))   
@@ -114,9 +105,6 @@ class FeatureExtractorXML:
         self.output_CSV.drop("totalExecTime", axis=1, inplace=True)
         self.output_CSV.drop("totalDepth", axis=1, inplace=True) 
         self.output_CSV.drop("helpCount", axis=1, inplace=True)
-
-        self.output_CSV["incomingCallsRatioInsideOutside"] = (self.output_CSV["incomingCallsInside"] / self.output_CSV["incomingCallsOutside"]).round(self.ROUND)
-        self.output_CSV["outgoingCallsRatioInsideOutside"] = (self.output_CSV["outgoingCallsInside"] / self.output_CSV["outgoingCallsOutside"]).round(self.ROUND)
 
         # Sometimes, the ratio or percentage can't be computed because the denominator equals 0, fill it as -1 to represent N/A.
         self.output_CSV = self.output_CSV.replace(np.inf, -1)
@@ -166,4 +154,4 @@ if __name__ == "__main__":
     feature_extractor.extract_features()
     feature_extractor.add_true_labels(reference_classes, true_labels)
 
-    feature_extractor.save_file(f"./data/dataset/{PROJECT_NAME}/features_{PROJECT_NAME}_XML_v2.csv")
+    feature_extractor.save_file(f"./data/dataset/{PROJECT_NAME}/features_{PROJECT_NAME}_XML_v3.csv")
