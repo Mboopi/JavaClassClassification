@@ -8,7 +8,7 @@ PROJECT_NAME = "sweethome3d"
 
 # Read files.
 features_CSV = pd.read_csv(f"./data/dataset/{PROJECT_NAME}/features_{PROJECT_NAME}_CSV.csv")
-features_XML = pd.read_csv(f"./data/dataset/{PROJECT_NAME}/features_{PROJECT_NAME}_XML_v3.csv")
+features_XML = pd.read_csv(f"./data/dataset/{PROJECT_NAME}/features_{PROJECT_NAME}_XML_v4.csv")
 
 
 # Merge the CSV files and keep only the classes that are present in the call tree.
@@ -20,7 +20,8 @@ features_merged = features_merged.sort_values("className")
 features_merged["percDeallocated"] = features_merged["percDeallocated"].fillna(-1)
 features_merged = features_merged.fillna(0)
 
-new_order = ["className", "numIntCalls", "numExtCalls", "ratioInternalExternal", "numIncomingCalls", "numOutgoingCalls", "ratioIncomingOutgoing",
+new_order = ["className", "numIntCalls", "numExtCalls_A", "numExtCalls_B", "ratioInternalExternal", 
+             "numIncomingCalls_A", "numIncomingCalls_B", "numOutgoingCalls_A", "numOutgoingCalls_B", "ratioIncomingOutgoing",
              "numUniqueIncomingCalls", "numUniqueOutgoingCalls", 
              "numObjectsCreated", "percObjectCreation", 
              "numLeaves", "percLeaves", "avgExecTime", "avgDepth", "numObjectsTotal", "numObjectsDeallocated", "percDeallocated", "avgObjectSize", "label"]
@@ -28,5 +29,5 @@ features_merged = features_merged.reindex(columns=new_order)
 
 
 # Save file.
-file_path = f"./data/dataset/{PROJECT_NAME}/features_{PROJECT_NAME}_FINAL_v3.csv"
+file_path = f"./data/dataset/{PROJECT_NAME}/features_{PROJECT_NAME}_FINAL_v4.csv"
 features_merged.to_csv(file_path, sep=",", index=False)   

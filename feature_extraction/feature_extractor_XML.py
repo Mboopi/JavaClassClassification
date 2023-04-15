@@ -10,10 +10,10 @@ class FeatureExtractorXML:
         self.ROUND = 3 # Decimals of rounding.
         self.output = {} # Store the intermediate features in this dict.
         self.output_CSV = None # Store the final features in this CSV.
-        class_info = {"numIntCalls": 0, "numExtCalls": 0, "numIncomingCalls": 0, "uniqueOutgoingCalls": set(), 
+        class_info = {"numIntCalls": 0, "numExtCalls_A": 0, "numIncomingCalls_A": 0, "uniqueOutgoingCalls": set(), 
                       "uniqueIncomingCalls": set(), "numLeaves": 0, "totalExecTime": 0, 
                       "helpCount": 0, "totalDepth": 0, "numObjectsCreated": 0,
-                      "incomingCallsInside": 0, "incomingCallsOutside": 0, "outgoingCallsInside": 0, "outgoingCallsOutside": 0}
+                      "numExtCalls_B": 0, "numIncomingCalls_B": 0}
         # helpCount represents the total count of the node itself, helper for computing avg_exec_time and avg_depth.
         
         nodes = self.call_tree.findall(".//node")
@@ -76,29 +76,35 @@ class FeatureExtractorXML:
                 else:
                     # Parent calls a child: its external calls increases, unique outgoing calls may increase.
                     if PROJECT_NAME in child_name:
-                        self.output[parent_name]["numExtCalls"] += child_count 
+                        self.output[parent_name]["numExtCalls_A"] += child_count 
                         self.output[parent_name]["uniqueOutgoingCalls"].add(child_name)
                     
                         # Furthermore: the childs incoming calls increases, unique incoming calls may increase.
-                        self.output[child_name]["numIncomingCalls"] += child_count 
+                        if PROJECT_NAME in parent_name:
+                            self.output[child_name]["numIncomingCalls_A"] += child_count 
+                        else:
+                            self.output[child_name]["numIncomingCalls_B"] += child_count 
                         self.output[child_name]["uniqueIncomingCalls"].add(parent_name)
+                    else:
+                        self.output[parent_name]["numExtCalls_B"] += child_count
 
             self.traverse_call_tree(child, child.findall("node"), current_depth = current_depth + 1)
     
     def extract_features(self):
         self.output_CSV = pd.DataFrame.from_dict(self.output, orient="index")
 
-        self.output_CSV["numOutgoingCalls"] = self.output_CSV["numIntCalls"] + self.output_CSV["numExtCalls"] + self.output_CSV["numLeaves"]
+        self.output_CSV["numOutgoingCalls_A"] = self.output_CSV["numIntCalls"] + self.output_CSV["numExtCalls_A"] + self.output_CSV["numLeaves"]
+        self.output_CSV["numOutgoingCalls_B"] = self.output_CSV["numIntCalls"] + self.output_CSV["numExtCalls_B"] + self.output_CSV["numLeaves"]
 
         self.output_CSV["numUniqueIncomingCalls"] = self.output_CSV["uniqueIncomingCalls"].apply(lambda x: len(x))  
         self.output_CSV["numUniqueOutgoingCalls"] = self.output_CSV["uniqueOutgoingCalls"].apply(lambda x: len(x))   
         self.output_CSV["avgExecTime"] = (self.output_CSV["totalExecTime"] / self.output_CSV["helpCount"]).round(self.ROUND)
         self.output_CSV["avgDepth"] = (self.output_CSV["totalDepth"] / self.output_CSV["helpCount"]).round(self.ROUND)
 
-        self.output_CSV["ratioInternalExternal"] = (self.output_CSV["numIntCalls"] / self.output_CSV["numExtCalls"]).round(self.ROUND)
-        self.output_CSV["ratioIncomingOutgoing"] = (self.output_CSV["numIncomingCalls"] / self.output_CSV["numOutgoingCalls"]).round(self.ROUND)
-        self.output_CSV["percObjectCreation"] = (self.output_CSV["numObjectsCreated"] / self.output_CSV["numOutgoingCalls"]).round(self.ROUND)
-        self.output_CSV["percLeaves"] = (self.output_CSV["numLeaves"] / (self.output_CSV["numOutgoingCalls"] + self.output_CSV["numLeaves"])).round(self.ROUND)
+        self.output_CSV["ratioInternalExternal"] = (self.output_CSV["numIntCalls"] / self.output_CSV["numExtCalls_A"]).round(self.ROUND)
+        self.output_CSV["ratioIncomingOutgoing"] = (self.output_CSV["numIncomingCalls_A"] / self.output_CSV["numOutgoingCalls_A"]).round(self.ROUND)
+        self.output_CSV["percObjectCreation"] = (self.output_CSV["numObjectsCreated"] / self.output_CSV["numOutgoingCalls_A"]).round(self.ROUND)
+        self.output_CSV["percLeaves"] = (self.output_CSV["numLeaves"] / (self.output_CSV["numOutgoingCalls_A"] + self.output_CSV["numLeaves"])).round(self.ROUND)
 
         self.output_CSV.drop("uniqueIncomingCalls", axis=1, inplace=True)
         self.output_CSV.drop("uniqueOutgoingCalls", axis=1, inplace=True)
@@ -154,4 +160,4 @@ if __name__ == "__main__":
     feature_extractor.extract_features()
     feature_extractor.add_true_labels(reference_classes, true_labels)
 
-    feature_extractor.save_file(f"./data/dataset/{PROJECT_NAME}/features_{PROJECT_NAME}_XML_v3.csv")
+    feature_extractor.save_file(f"./data/dataset/{PROJECT_NAME}/features_{PROJECT_NAME}_XML_v4.csv")
