@@ -1,6 +1,6 @@
 '''
 Small script to make the static features that were extracted from the srcML XML ready for training.
-For instance, converting the name to a different notation, removing bad columns and adding true labels.
+For instance, converting the name to a different notation, removing bad columns and layer information, adding true labels.
 '''
 
 import pandas as pd
@@ -26,31 +26,44 @@ def convert_name(class_name):
 
     return class_name
 
-# Load raw static features.
-df = pd.read_csv("/Users/mboopi/Documents/GitHub/JavaClassClassification/feature_extraction/srcml_output/static_features_sweethome3d_raw.csv", index_col=False)
+def get_layer(x):
+    package = x.split(".")
+    package_to_layer = {"": "None", "applet": "Presentation", "io": "DataAccess", "j3d": "Presentation",
+                        "model": "Business", "plugin": "CrossCutting", "swing": "Presentation",
+                        "tools": "Business", "viewcontroller": "Service"}
 
-# Remove test classes.
-df = df[~df['Fullpathname'].str.contains('Test')]
+    if len(package) < 5:
+        package_name = ""
+    else:
+        package_name = package[3]
+    
+    return package_to_layer[package_name]
 
-print(df.columns)
+if __name__ == "__main__":
+    # Load raw static features.
+    df = pd.read_csv("/Users/mboopi/Documents/GitHub/JavaClassClassification/feature_extraction/srcml_output/static_features_sweethome3d_raw.csv", index_col=False)
 
-# Drop unnecessary columns.
-df = df.drop(columns=["Classname", "Unnamed: 31", "numInnerClasses"])
+    # Remove test classes.
+    df = df[~df['Fullpathname'].str.contains('Test')]
 
-# Rename Fullpathname.
-df = df.rename(columns={"Fullpathname": "className"})
+    print(df.columns)
 
-# Convert Fullpathname to our own notation.
-df["className"] = df["className"].apply(lambda x: convert_name(x))
+    # Drop unnecessary columns.
+    df = df.drop(columns=["Classname", "Unnamed: 31", "numInnerClasses"])
 
-# Add labels to the classes.
-labels_csv = pd.read_csv(f"/Users/mboopi/Documents/GitHub/JavaClassClassification/data/ground_truth/{PROJECT_NAME}/labeled_classes_FINAL.csv", delimiter=",")
+    # Rename Fullpathname.
+    df = df.rename(columns={"Fullpathname": "className"})
 
-df = pd.merge(df, labels_csv[["className", "label"]], on='className', how='inner')
+    # Convert Fullpathname to our own notation.
+    df["className"] = df["className"].apply(lambda x: convert_name(x))
 
-# Rename Fullpathname.
-# df = df.rename(columns={"fullpathname": "className"})
+    # Add layer information to the classes.
+    df["layer"] = df["className"].apply(lambda x: get_layer(x))
 
+    # Add labels to the classes.
+    labels_csv = pd.read_csv(f"/Users/mboopi/Documents/GitHub/JavaClassClassification/data/ground_truth/{PROJECT_NAME}/labeled_classes_FINAL.csv", delimiter=",")
 
-# Save processed final CSV.
-df.to_csv(f"/Users/mboopi/Documents/GitHub/JavaClassClassification/data/dataset/{PROJECT_NAME}/static_features_sweethome3d_FINAL.csv", index=False)
+    df = pd.merge(df, labels_csv[["className", "label"]], on='className', how='inner')
+
+    # Save processed final CSV.
+    df.to_csv(f"/Users/mboopi/Documents/GitHub/JavaClassClassification/data/dataset/{PROJECT_NAME}/static_features_sweethome3d_FINAL.csv", index=False)
