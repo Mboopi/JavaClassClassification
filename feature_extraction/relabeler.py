@@ -7,8 +7,8 @@ def apply_new_label(x):
     else:
         return x["label"]
 
-original_CSV = pd.read_csv("/Users/mboopi/Documents/GitHub/JavaClassClassification/data/dataset/sweethome3d/features_sweethome3d_FINAL_v4.csv")
-relabeled = pd.read_csv("/Users/mboopi/Desktop/sweethome3d_relabeled_utf.csv", delimiter=";").drop(columns=["remark", "responsibility"])
+original_CSV = pd.read_csv("/Users/mboopi/Documents/GitHub/JavaClassClassification/data/dataset/sweethome3d/features_sweethome3d_FINAL_v7_RELABELED2.csv")
+relabeled = pd.read_csv("/Users/mboopi/Documents/GitHub/JavaClassClassification/data/ground_truth/sweethome3d/sweethome3d_relabeled_utf.csv", delimiter=";").drop(columns=["remark", "responsibility"])
 
 labels_dict = {"CO": "Coordinator", "CT": "Controller", "ST": "Structurer",
                "IT": "Interfacer", "IH": "Information Holder", "SP": "Service Provider", "DISCARD": "DISCARD"}
@@ -18,6 +18,10 @@ labels_dict = {"CO": "Coordinator", "CT": "Controller", "ST": "Structurer",
 new_CSV = pd.merge(original_CSV, relabeled, on="className", how="left")
 # new_CSV["label_temp"] = new_CSV.apply(lambda x: x["labelNew"] if x["labelNew"] else x["label"], axis=1)
 new_CSV["label"] = new_CSV.apply(lambda x: apply_new_label(x), axis=1)
-new_CSV = new_CSV.drop(columns=["labelOld", "labelNew", "labelSecondary"])
+# new_CSV = new_CSV.drop(columns=["labelOld", "labelNew", "labelSecondary"]) # Single label.
 
-new_CSV.to_csv("/Users/mboopi/Documents/GitHub/JavaClassClassification/data/dataset/sweethome3d/features_sweethome3d_FINAL_v4_RELABELED3.csv", index=False)
+# Multi label.
+new_CSV["labelSecondary"] = new_CSV["labelSecondary"].apply(lambda x: labels_dict[x] if not pd.isna(x) else "")
+new_CSV = new_CSV.drop(columns=["labelOld", "labelNew"])
+
+new_CSV.to_csv("/Users/mboopi/Documents/GitHub/JavaClassClassification/data/dataset/sweethome3d/features_sweethome3d_FINAL_v7_MULTILABEL.csv", index=False)
