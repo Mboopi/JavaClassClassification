@@ -30,8 +30,8 @@ class xmlProcessor():
                 child.attrib.pop("lineNumber")
                 child.attrib.pop("percent")
 
-                if "time" in child.attrib.keys():
-                    child.attrib.pop("time")
+                # if "time" in child.attrib.keys():
+                #     child.attrib.pop("time")
                 
                 regex = "[$]\d+"
                 class_name = child.attrib["class"]
@@ -56,7 +56,7 @@ class xmlProcessor():
 
 if __name__ == "__main__":
     PROJECT_NAME = "sweethome3d"
-    # PROJECT_NAME = "test_project"
+    # PROJECT_NAME = "jhotdraw"
 
     # Paths to CSV recorded objects CSVs.
     call_trees = find_file_paths("CallTree.xml", PROJECT_NAME)
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     call_tree_procesor.combine_files()
     call_tree_procesor.merge_anom_classes()
     # call_tree_procesor.drop_test_classes(call_tree_root, call_tree_root.findall("node"), firstCall=True)
-    call_tree_procesor.save_file(f"./feature_extraction/raw_data/{PROJECT_NAME}/CallTree.xml")
+    call_tree_procesor.save_file(f"./feature_extraction/raw_data/{PROJECT_NAME}/CallTree_withTime.xml")
 ''
     # hotspot_processor = xmlProcessor(alloc_hotspots)
     # hotspot_processor.combine_files()

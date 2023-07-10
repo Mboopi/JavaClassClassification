@@ -36,18 +36,19 @@ class csvProcessor():
 
 
 if __name__ == "__main__":
-    PROJECT_NAME = "sweethome3d"
-    # PROJECT_NAME = "test_project"
+    # PROJECT_NAME = "sweethome3d"
+    PROJECT_NAME = "jhotdraw"
 
-    # Classes that are used by the paper, i.e. our reference classes.
-    labels_csv = pd.read_csv(f"./data/ground_truth/{PROJECT_NAME}/labeled_classes.csv")
-    labels_csv.pop("index")
-    labels_csv.pop("case")
+    '''Only applicable to sweethome3d.'''
+    # # Classes that are used by the paper, i.e. our reference classes.
+    # labels_csv = pd.read_csv(f"./data/ground_truth/{PROJECT_NAME}/labeled_classes.csv")
+    # labels_csv.pop("index")
+    # labels_csv.pop("case")
     
-    # Convert the name notation to the notation used by JProfiler and store the classes in a list.
-    reference_classes = []
-    for name in labels_csv["fullpathname"]:
-        reference_classes.append(convert_name(name))
+    # # Convert the name notation to the notation used by JProfiler and store the classes in a list.
+    # reference_classes = []
+    # for name in labels_csv["fullpathname"]:
+    #     reference_classes.append(convert_name(name))
 
     # Paths to CSV recorded objects CSVs.
     recorded_objects_all = find_file_paths("All.csv", PROJECT_NAME)
@@ -55,10 +56,12 @@ if __name__ == "__main__":
 
     all_objects_processor = csvProcessor(recorded_objects_all)
     all_objects_processor.combine_files()
-    all_objects_processor.drop_redundant_classes(reference_classes)
+    all_objects_processor.merge_anom_classes()
+    # all_objects_processor.drop_redundant_classes(reference_classes)
     all_objects_processor.save_file(f"./feature_extraction/raw_data/{PROJECT_NAME}/RecordedObjectsAll.csv")
 
     gc_objects_processor = csvProcessor(recorded_objects_gc)
     gc_objects_processor.combine_files()
-    gc_objects_processor.drop_redundant_classes(reference_classes)
+    gc_objects_processor.merge_anom_classes()
+    # gc_objects_processor.drop_redundant_classes(reference_classes)
     gc_objects_processor.save_file(f"./feature_extraction/raw_data/{PROJECT_NAME}/RecordedObjectsGarbage.csv")

@@ -32,7 +32,7 @@ class FeatureExtractorCSV:
 
 if __name__ == "__main__":
     # PROJECT_NAME = "sweethome3d"
-    PROJECT_NAME = "test_project"
+    PROJECT_NAME = "jhotdraw"
 
     objects_all = pd.read_csv(f"./feature_extraction/raw_data/{PROJECT_NAME}/RecordedObjectsAll.csv")
     objects_gc = pd.read_csv(f"./feature_extraction/raw_data/{PROJECT_NAME}/RecordedObjectsGarbage.csv")
