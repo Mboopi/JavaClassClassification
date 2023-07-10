@@ -79,7 +79,7 @@ class FeatureExtractorXML:
         self.output_CSV = None # Store the final features in this CSV.
         class_info = {"numIntCalls": 0, "numExtCalls_A": 0, "numIncomingCalls_A": 0, "uniqueOutgoingCalls": set(), 
                       "uniqueIncomingCalls": set(), "numLeaves": 0, "totalExecTime": 0, #"totalTime": 0,
-                      "helpCount": 0, "totalDepth": 0, "avgRelativeDepth": 0, "numObjectsCreated": 0,
+                      "helpCount": 0, "totalDepth": 0, "avgRelativeDepth": 0, "numObjectsCreated_A": 0, "numObjectsCreated_B": 0,
                       "numExtCalls_B": 0, "numIncomingCalls_B": 0, "numDataStructureCalls": 0, 
                       "return_none": 0, "return_var": 0, "return_data_struct": 0, "return_java_obj": 0, "return_project_obj": 0, "return_ext_obj": 0,
                       "arg_none": 0, "arg_var": 0, "arg_data_struct": 0, "arg_java_obj": 0, "arg_project_obj": 0, "arg_ext_obj": 0}
@@ -90,6 +90,8 @@ class FeatureExtractorXML:
         self.avgRelativeDepth = {} # Helper variable that stores for each class, its average relative depth.
         self.all_paths = [] # Helper variable that stores all paths from root to a leaf.
         self.current_path = [] # Helper variable to store current path temporarily.
+        
+        self.user_package = "com.eteks.sweethome3d" # Used to seperate user defined classes from other classes. 
         
 
         nodes = self.call_tree.findall(".//node")
@@ -107,7 +109,7 @@ class FeatureExtractorXML:
     def remove_non_src_classes(self, parent_node, children, firstCall=False):
         for child in children:
             if not firstCall:
-                if not "com.eteks.sweethome3d" in child.attrib["class"]:# or "Test" in child.attrib["class"]:
+                if not self.user_package in child.attrib["class"]:# or "Test" in child.attrib["class"]:
                     parent_node.remove(child)
                     print("REMOVED")
                 else:
@@ -149,7 +151,10 @@ class FeatureExtractorXML:
                 child_method = child.attrib["methodName"]
 
                 if "init" in child_method or "cinit" in child_method:
-                    self.output[parent_name]["numObjectsCreated"] += child_count
+                    if self.user_package in child_name:
+                        self.output[parent_name]["numObjectsCreated_A"] += child_count
+                    else:
+                        self.output[parent_name]["numObjectsCreated_B"] += child_count
 
                 # Extract features...
                 if parent_name == child_name:
@@ -160,12 +165,12 @@ class FeatureExtractorXML:
 
                 else:
                     # Parent calls a child: its external calls increases, unique outgoing calls may increase.
-                    if "com.eteks.sweethome3d" in child_name:
+                    if self.user_package in child_name:
                         self.output[parent_name]["numExtCalls_A"] += child_count 
                         self.output[parent_name]["uniqueOutgoingCalls"].add(child_name)
                     
                         # Furthermore: the childs incoming calls increases, unique incoming calls may increase.
-                        if "com.eteks.sweethome3d" in parent_name:
+                        if self.user_package in parent_name:
                             self.output[child_name]["numIncomingCalls_A"] += child_count 
 
                             # Parent makes a call to child layer and child receives call from parent layer.
@@ -243,7 +248,7 @@ class FeatureExtractorXML:
         # self.output_CSV["ratioInternalExternal_B"] = (self.output_CSV["numIntCalls"] / self.output_CSV["numExtCalls_B"]).round(self.ROUND)
         # self.output_CSV["ratioIncomingOutgoing_B"] = (self.output_CSV["numIncomingCalls_B"] / self.output_CSV["numOutgoingCalls_B"]).round(self.ROUND)
 
-        self.output_CSV["percObjectCreation"] = self.output_CSV["numObjectsCreated"] / self.output_CSV["numOutgoingCalls_A"]
+        self.output_CSV["percObjectCreation"] = self.output_CSV["numObjectsCreated_A"] / self.output_CSV["numOutgoingCalls_A"]
         self.output_CSV["percLeaves"] = self.output_CSV["numLeaves"] / (self.output_CSV["numOutgoingCalls_A"] + self.output_CSV["numLeaves"])
 
         self.output_CSV.drop("uniqueIncomingCalls", axis=1, inplace=True)
@@ -257,9 +262,15 @@ class FeatureExtractorXML:
 
         # If a class from layer X never calls a class from layer Y, the number of calls should be 0.
         keys_with_layer = [key for key in self.output_CSV.keys() if "Layer" in key]
-        # for key in keys_with_layer:
-        #     self.output_CSV[key].fillna(0)
         self.output_CSV[keys_with_layer] = self.output_CSV[keys_with_layer].fillna(0)
+
+        # Derive percToLayerX and percFromLayerX features.
+        cols_ToLayer = [col for col in self.output_CSV if 'ToLayer' in col]
+        cols_FromLayer = [col for col in self.output_CSV if 'FromLayer' in col]
+        for col in cols_ToLayer:
+            self.output_CSV[f"perc{col[3:]}"] = self.output_CSV.apply(lambda row: 0 if (row[col] == 0 or row['numOutgoingCalls_A'] == 0) else row[col] / row['numOutgoingCalls_A'], axis=1)
+        for col in cols_FromLayer:
+            self.output_CSV[f"perc{col[3:]}"] = self.output_CSV.apply(lambda row: 0 if (row[col] == 0 or row['numIncomingCalls_A'] == 0) else row[col] / row['numIncomingCalls_A'], axis=1)
 
         # Sometimes, the ratio or percentage can't be computed because the denominator equals 0, fill it as -1 to represent N/A.
         self.output_CSV = self.output_CSV.replace(np.inf, -1)
@@ -310,4 +321,4 @@ if __name__ == "__main__":
     feature_extractor.extract_features()
     feature_extractor.add_true_labels(reference_classes, true_labels)
 
-    feature_extractor.save_file(f"./data/dataset/{PROJECT_NAME}/features_{PROJECT_NAME}_XML_v7.csv")
+    feature_extractor.save_file(f"./data/dataset/{PROJECT_NAME}/features_{PROJECT_NAME}_XML_v9.csv")
