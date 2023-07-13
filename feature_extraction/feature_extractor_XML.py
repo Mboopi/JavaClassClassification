@@ -3,7 +3,6 @@ import copy
 import pandas as pd
 import numpy as np
 import re
-from feature_exploration import convert_name
 from static_features_handler import get_layer
 
 data_types = ["Collection", "Dequeue", "Enumeration", "List", "Map", "Queue", "Set", 
@@ -172,6 +171,7 @@ class FeatureExtractorXML:
                         # Furthermore: the childs incoming calls increases, unique incoming calls may increase.
                         if self.user_package in parent_name:
                             self.output[child_name]["numIncomingCalls_A"] += child_count 
+                            self.output[child_name]["uniqueIncomingCalls"].add(parent_name)
 
                             # Parent makes a call to child layer and child receives call from parent layer.
                             if not "junit" in parent_name and not "junit" in child_name:
@@ -189,7 +189,7 @@ class FeatureExtractorXML:
                             
                         else:
                             self.output[child_name]["numIncomingCalls_B"] += child_count 
-                        self.output[child_name]["uniqueIncomingCalls"].add(parent_name)
+                        # self.output[child_name]["uniqueIncomingCalls"].add(parent_name)
                     else:
                         self.output[parent_name]["numExtCalls_B"] += child_count
                     
@@ -231,8 +231,7 @@ class FeatureExtractorXML:
         self.extract_average_relative_depth()
         self.output_CSV = pd.DataFrame.from_dict(self.output, orient="index")
 
-        self.output_CSV["numOutgoingCalls_A"] = self.output_CSV["numIntCalls"] + self.output_CSV["numExtCalls_A"]
-        self.output_CSV["numOutgoingCalls_B"] = self.output_CSV["numIntCalls"] + self.output_CSV["numExtCalls_B"] 
+        self.output_CSV["numOutgoingCalls"] = self.output_CSV["numIntCalls"] + self.output_CSV["numExtCalls_A"]
 
         self.output_CSV["numUniqueIncomingCalls"] = self.output_CSV["uniqueIncomingCalls"].apply(lambda x: len(x))  
         self.output_CSV["numUniqueOutgoingCalls"] = self.output_CSV["uniqueOutgoingCalls"].apply(lambda x: len(x))   
@@ -241,15 +240,10 @@ class FeatureExtractorXML:
         # self.output_CSV["avgTime"] =  (self.output_CSV["totalTime"] / self.output_CSV["helpCount"]).round(self.ROUND)
         
         self.output_CSV["ratioInternalExternal"] = self.output_CSV["numIntCalls"] / self.output_CSV["numExtCalls_A"]
-        self.output_CSV["ratioIncomingOutgoing"] = self.output_CSV["numIncomingCalls_A"] / self.output_CSV["numOutgoingCalls_A"]
+        self.output_CSV["ratioIncomingOutgoing"] = self.output_CSV["numIncomingCalls_A"] / self.output_CSV["numOutgoingCalls"]
 
-        # self.output_CSV["ratioInternalExternal_A"] = (self.output_CSV["numIntCalls"] / self.output_CSV["numExtCalls_A"]).round(self.ROUND)
-        # self.output_CSV["ratioIncomingOutgoing_A"] = (self.output_CSV["numIncomingCalls_A"] / self.output_CSV["numOutgoingCalls_A"]).round(self.ROUND)
-        # self.output_CSV["ratioInternalExternal_B"] = (self.output_CSV["numIntCalls"] / self.output_CSV["numExtCalls_B"]).round(self.ROUND)
-        # self.output_CSV["ratioIncomingOutgoing_B"] = (self.output_CSV["numIncomingCalls_B"] / self.output_CSV["numOutgoingCalls_B"]).round(self.ROUND)
-
-        self.output_CSV["percObjectCreation"] = self.output_CSV["numObjectsCreated_A"] / self.output_CSV["numOutgoingCalls_A"]
-        self.output_CSV["percLeaves"] = self.output_CSV["numLeaves"] / (self.output_CSV["numOutgoingCalls_A"] + self.output_CSV["numLeaves"])
+        self.output_CSV["percObjectCreation"] = self.output_CSV["numObjectsCreated_A"] / self.output_CSV["numOutgoingCalls"]
+        self.output_CSV["percLeaves"] = self.output_CSV["numLeaves"] / (self.output_CSV["numOutgoingCalls"] + self.output_CSV["numLeaves"])
 
         self.output_CSV.drop("uniqueIncomingCalls", axis=1, inplace=True)
         self.output_CSV.drop("uniqueOutgoingCalls", axis=1, inplace=True)
@@ -258,7 +252,7 @@ class FeatureExtractorXML:
         self.output_CSV.drop("helpCount", axis=1, inplace=True)
 
         # Out of all outgoing calls a class make, what's the percentage that go to data structures?
-        self.output_CSV["percDataStructure"] = self.output_CSV["numDataStructureCalls"] / (self.output_CSV["numOutgoingCalls_B"] + self.output_CSV["numOutgoingCalls_A"])
+        self.output_CSV["percDataStructure"] = self.output_CSV["numDataStructureCalls"] / (self.output_CSV["numExtCalls_B"] + self.output_CSV["numOutgoingCalls"])
 
         # If a class from layer X never calls a class from layer Y, the number of calls should be 0.
         keys_with_layer = [key for key in self.output_CSV.keys() if "Layer" in key]
@@ -268,7 +262,7 @@ class FeatureExtractorXML:
         cols_ToLayer = [col for col in self.output_CSV if 'ToLayer' in col]
         cols_FromLayer = [col for col in self.output_CSV if 'FromLayer' in col]
         for col in cols_ToLayer:
-            self.output_CSV[f"perc{col[3:]}"] = self.output_CSV.apply(lambda row: 0 if (row[col] == 0 or row['numOutgoingCalls_A'] == 0) else row[col] / row['numOutgoingCalls_A'], axis=1)
+            self.output_CSV[f"perc{col[3:]}"] = self.output_CSV.apply(lambda row: 0 if (row[col] == 0 or row['numOutgoingCalls'] == 0) else row[col] / row['numOutgoingCalls'], axis=1)
         for col in cols_FromLayer:
             self.output_CSV[f"perc{col[3:]}"] = self.output_CSV.apply(lambda row: 0 if (row[col] == 0 or row['numIncomingCalls_A'] == 0) else row[col] / row['numIncomingCalls_A'], axis=1)
 
@@ -321,4 +315,4 @@ if __name__ == "__main__":
     feature_extractor.extract_features()
     feature_extractor.add_true_labels(reference_classes, true_labels)
 
-    feature_extractor.save_file(f"./data/dataset/{PROJECT_NAME}/features_{PROJECT_NAME}_XML_v9.csv")
+    feature_extractor.save_file(f"./data/dataset/{PROJECT_NAME}/features_{PROJECT_NAME}_XML_v10.csv")

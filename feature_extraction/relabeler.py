@@ -7,7 +7,7 @@ def apply_new_label(x):
     else:
         return x["label"]
 
-original_CSV = pd.read_csv("/Users/mboopi/Documents/GitHub/JavaClassClassification/data/dataset/sweethome3d/features_sweethome3d_FINAL_v9_RELABELED2.csv")
+original_CSV = pd.read_csv("/Users/mboopi/Documents/GitHub/JavaClassClassification/data/dataset/sweethome3d/features_sweethome3d_FINAL_v10_RELABELED2.csv")
 # original_CSV = pd.read_csv("/Users/mboopi/Documents/GitHub/JavaClassClassification/data/dataset/sweethome3d/static_features_sweethome3d_FINAL.csv")
 relabeled = pd.read_csv("/Users/mboopi/Documents/GitHub/JavaClassClassification/data/ground_truth/sweethome3d/sweethome3d_relabeled_utf.csv", delimiter=";").drop(columns=["remark", "responsibility"])
 
@@ -25,5 +25,5 @@ new_CSV["label"] = new_CSV.apply(lambda x: apply_new_label(x), axis=1)
 new_CSV["labelSecondary"] = new_CSV["labelSecondary"].apply(lambda x: labels_dict[x] if not pd.isna(x) else "")
 new_CSV = new_CSV.drop(columns=["labelOld", "labelNew"])
 
-new_CSV.to_csv("/Users/mboopi/Documents/GitHub/JavaClassClassification/data/dataset/sweethome3d/features_sweethome3d_FINAL_v9_MULTILABEL.csv", index=False)
+new_CSV.to_csv("/Users/mboopi/Documents/GitHub/JavaClassClassification/data/dataset/sweethome3d/features_sweethome3d_FINAL_v10_MULTILABEL.csv", index=False)
 # new_CSV.to_csv("/Users/mboopi/Documents/GitHub/JavaClassClassification/data/dataset/sweethome3d/static_features_sweethome3d_FINAL_MULTILABEL.csv", index=False)
