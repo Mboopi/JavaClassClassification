@@ -6,11 +6,11 @@ import re
 from static_features_handler import get_layer
 
 data_types = ["Collection", "Dequeue", "Enumeration", "List", "Map", "Queue", "Set", 
-                  "SortedMap", "SortedSet",
-                  "ArrayDeque", "ArrayList", "Dictionary", "EnumMap", "EnumSet",
-                  "HashMap", "HashSet", "Hashtable", "IdentityHashMap", "LinkedHashMap",
-                  "LinkedHashSet", "LinkedList", "PriorityQueue", "Stack", "TreeMap", 
-                  "TreeSet", "Vector", "WeakHashMap"]
+              "SortedMap", "SortedSet",
+              "ArrayDeque", "ArrayList", "Dictionary", "EnumMap", "EnumSet",
+              "HashMap", "HashSet", "Hashtable", "IdentityHashMap", "LinkedHashMap",
+              "LinkedHashSet", "LinkedList", "PriorityQueue", "Stack", "TreeMap", 
+              "TreeSet", "Vector", "WeakHashMap"]
 
 '''Helper method to determine the argument types and return types from a methodSignature.'''
 def get_type(sub_signature, package_name):
@@ -90,7 +90,8 @@ class FeatureExtractorXML:
         self.all_paths = [] # Helper variable that stores all paths from root to a leaf.
         self.current_path = [] # Helper variable to store current path temporarily.
         
-        self.user_package = "com.eteks.sweethome3d" # Used to seperate user defined classes from other classes. 
+        # self.user_package = "com.eteks.sweethome3d" # Used to seperate user defined classes from other classes. 
+        self.user_package = "CH.ifa.draw" 
         
 
         nodes = self.call_tree.findall(".//node")
@@ -216,7 +217,12 @@ class FeatureExtractorXML:
                 count = tuple[1]
                 if not className in self.avgRelativeDepth.keys():
                     self.avgRelativeDepth[className] = 0
-                relativeDepth = depth / (len(path) - 1)
+
+                if len(path) - 1 == 0: # E.g. path P=[X] means that X has depth 0.
+                    relativeDepth = 0
+                else:
+                    relativeDepth = depth / (len(path) - 1)
+
                 relativeDepth = relativeDepth * count / self.totalCount[className]
                 self.avgRelativeDepth[className] += relativeDepth
         
@@ -291,11 +297,11 @@ class FeatureExtractorXML:
 
 
 if __name__ == "__main__":
-    PROJECT_NAME = "sweethome3d"
-    # PROJECT_NAME = "jhotdraw"
+    # PROJECT_NAME = "sweethome3d"
+    PROJECT_NAME = "jhotdraw"
 
     # Classes that are used by the paper, i.e. our reference classes. Or just a list of classes that we want for other projects.
-    labels_csv = pd.read_csv(f"./data/ground_truth/{PROJECT_NAME}/labeled_classes_FINAL.csv", delimiter=",")
+    labels_csv = pd.read_csv(f"./data/ground_truth/{PROJECT_NAME}/labeled_classes_FINAL.csv", delimiter=";") # If error, change ; to '.
     
     # Convert the name notation to the notation used by JProfiler and store the classes and their labels in seperate lists.
     reference_classes = []
@@ -308,11 +314,12 @@ if __name__ == "__main__":
         reference_classes.append(name)
         true_labels.append(label)
 
-    call_tree = ET.parse(f"./feature_extraction/raw_data/{PROJECT_NAME}/CallTree_withTime.xml")
+    # call_tree = ET.parse(f"./feature_extraction/raw_data/{PROJECT_NAME}/CallTree_withTime.xml")
+    call_tree = ET.parse(f"./feature_extraction/raw_data/{PROJECT_NAME}/CallTree.xml")
 
     feature_extractor = FeatureExtractorXML(call_tree)
     feature_extractor.drop_redundant_classes(reference_classes)
     feature_extractor.extract_features()
     feature_extractor.add_true_labels(reference_classes, true_labels)
 
-    feature_extractor.save_file(f"./data/dataset/{PROJECT_NAME}/features_{PROJECT_NAME}_XML_v10.csv")
+    feature_extractor.save_file(f"./data/dataset/{PROJECT_NAME}/features_{PROJECT_NAME}_XML.csv")
